@@ -1,5 +1,7 @@
 //rcli csv -i input.csv -o output.json --header -d ','
 
+use std::path::Path;
+
 use clap::{Parser, Subcommand};
 
 #[derive(Debug, Parser)] //相当于注解，打上标识的结构体再特定场景下会有特别处理
@@ -17,7 +19,7 @@ enum SubCommand {
 
 #[derive(Debug, Parser)]
 struct CsvOpts {
-    #[arg(short, long)]
+    #[arg(short, long, value_parser= valid_input_path)]
     input: String,
 
     #[arg(short, long, default_value = "output.json")]
@@ -34,4 +36,12 @@ fn main() {
     // println!("Hello, world!");
     let opts = Opts::parse();
     println!("{:?}", opts);
+}
+
+fn valid_input_path(filename: &str) -> Result<String, String> {
+    if Path::new(filename).exists() {
+        Ok(filename.into())
+    } else {
+        Err(format!("{} not found", filename))
+    }
 }
