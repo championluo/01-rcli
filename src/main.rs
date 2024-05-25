@@ -38,10 +38,15 @@ fn main() {
     println!("{:?}", opts);
 }
 
-fn valid_input_path(filename: &str) -> Result<String, String> {
+//出参还可以是静态类型， 静态类型就是直接使用方法区中字符串的字面值常量，其生命周期和应用存活期间一致
+fn valid_input_path(filename: &str) -> Result<String, &'static str> {
     if Path::new(filename).exists() {
+        //into就是filename进去堆空间
         Ok(filename.into())
     } else {
-        Err(format!("{} not found", filename))
+        // Err(format!("file not found", filename))
+        //这里into函数可以简化
+        // Err("file not found".into())
+        Err("file not found")
     }
 }
