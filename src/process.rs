@@ -19,28 +19,19 @@ struct Player {
     kit: u8,
 }
 
-// #[command(name="csv_proc")]
 pub fn process_csv(input: &str, output: &str) -> Result<()> {
     let mut reader = Reader::from_path(input)?;
-    let mut ret_vec = Vec::with_capacity(128); // let records = reader.deserialize()
-                                               // .map(|record| record?)>
-                                               // .collect::<Vec<Player>>();
-                                               //这里borrow了reader 2个mutable reference
-                                               //通过使用clone() 来消除重复可变引用的影响
+    let mut ret_vec = Vec::with_capacity(128);
     let headers = reader.headers()?.clone();
     // for result in reader.deserialize() {
     for result in reader.records() {
         let record = result?;
         // println!("{:?}", record);
+        //zip的作用是将两个迭代器的元素组合成一个新的迭代器【header， record】
+        //collect::<Value>()-> 将元组的迭代器转换为json对象
         let json_value = headers.iter().zip(record.iter()).collect::<Value>();
         ret_vec.push(json_value);
     }
-    // for result in reader.deserialize() {
-    //     // Notice that we need to provide a type hint for automatic
-    //     // deserialization.
-    //     let record: Player = result?;
-    //     println!("{:?}", record);
-    // }
     let to_string_pretty = serde_json::to_string_pretty(&ret_vec)?;
     fs::write(output, to_string_pretty)?;
     Ok(())
