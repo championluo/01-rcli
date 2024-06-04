@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs;
 
+use crate::opts::OutputFormat;
+
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "PascalCase")]
 struct Player {
@@ -19,7 +21,8 @@ struct Player {
     kit: u8,
 }
 
-pub fn process_csv(input: &str, output: &str) -> Result<()> {
+//这里增加format入参
+pub fn process_csv(input: &str, output: String, format: OutputFormat) -> Result<()> {
     let mut reader = Reader::from_path(input)?;
     let mut ret_vec = Vec::with_capacity(128);
     let headers = reader.headers()?.clone();
@@ -32,7 +35,14 @@ pub fn process_csv(input: &str, output: &str) -> Result<()> {
         let json_value = headers.iter().zip(record.iter()).collect::<Value>();
         ret_vec.push(json_value);
     }
-    let to_string_pretty = serde_json::to_string_pretty(&ret_vec)?;
-    fs::write(output, to_string_pretty)?;
+
+    //parse的时候，根据format来选择序列化方式
+    let content = match format {
+        OutputFormat::Json => serde_json::to_string_pretty(&ret_vec)?,
+        OutputFormat::Yaml => serde_yaml::to_string(&ret_vec)?,
+        OutputFormat::Toml => toml::to_string(&ret_vec)?,
+    };
+    // let to_string_pretty = serde_json::to_string_pretty(&ret_vec)?;
+    fs::write(output, content)?;
     Ok(())
 }
