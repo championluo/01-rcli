@@ -1,19 +1,23 @@
-use clap::Parser;
+use clap::{Parser, Subcommand};
+
+#[derive(Debug, Subcommand)]
+pub enum Base64SubCommand {
+    //cargo run -- base64 encode -i abc
+    #[command(name = "encode", about = "Encode base64 strings")]
+    Encode(Base65EncodeOpts),
+    //cargo run -- base64 decode -o abc
+    #[command(name = "decode", about = "Decode base64 strings")]
+    Decode(Base65DecodeOpts),
+}
 
 #[derive(Debug, Parser)]
-pub struct Base64SubCommand {
-    #[arg(short, long, default_value_t = 16)]
-    pub length: u8,
+pub struct Base65EncodeOpts {
+    #[arg(short, long)]
+    pub input: String,
+}
 
-    #[arg(long, default_value_t = true)]
-    pub uppercase: bool,
-
-    #[arg(long, default_value_t = true)]
-    pub lowercase: bool,
-
-    #[arg(long, default_value_t = true)]
-    pub number: bool,
-
-    #[arg(long, default_value_t = true)]
-    pub symbol: bool,
+#[derive(Debug, Parser)]
+pub struct Base65DecodeOpts {
+    #[arg(short, long)]
+    pub output: String,
 }

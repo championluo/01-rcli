@@ -5,8 +5,7 @@ mod genpass;
 use clap::{Parser, Subcommand};
 
 use self::csv::CsvOpts;
-pub use self::csv::OutputFormat;
-use base64::Base64SubCommand;
+pub use self::{base64::*, csv::OutputFormat};
 use genpass::GenPassOpts;
 
 #[derive(Debug, Parser)] //相当于注解，打上标识的结构体再特定场景下会有特别处理
@@ -24,6 +23,9 @@ pub enum SubCommand {
     #[command(name = "genpass", about = "Generate random password")]
     GenPass(GenPassOpts),
 
-    #[command(name = "base64", about = "Encode or decode base64 strings")]
+    // #[command(name = "base64", about = "Encode or decode base64 strings")]
+    //这样写会报错： the trait bound `Base64SubCommand: clap::Args` is not satisfied the following other types implement trait `clap::Args`:
+    //这是因为Base64SubCommand 是 Base64的子命令，Base64下面又分化了2个子命令，所以这里要标注command成subcommand
+    #[command(subcommand)]
     Base64(Base64SubCommand),
 }

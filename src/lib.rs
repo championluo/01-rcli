@@ -3,5 +3,5 @@
 mod cli;
 mod process;
 
-pub use cli::{Opts, SubCommand};
+pub use cli::{Base64SubCommand, Base65DecodeOpts, Base65EncodeOpts, Opts, SubCommand};
 pub use process::{process_csv, process_genpass};
