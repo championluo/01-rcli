@@ -8,6 +8,7 @@ use rcli::{process_csv, process_genpass, Opts, SubCommand};
 fn main() -> Result<()> {
     let opts = Opts::parse();
     match opts.cmd {
+        //cargo run --csv -i assert/juventus.csv -f yaml
         SubCommand::Csv(opts) => {
             //条件赋值+利用if let 解构
             let output = if let Some(output) = opts.output {
@@ -19,6 +20,7 @@ fn main() -> Result<()> {
             };
             process_csv(&opts.input, output, opts.format)?;
         }
+        //cargo run --genpass -l 8 --lowercase --uppercase --number --symbol
         SubCommand::GenPass(opts) => {
             // println!("{:?}", opts);
             let _ = process_genpass(
