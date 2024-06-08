@@ -2,6 +2,8 @@ mod base64;
 mod csv;
 mod genpass;
 
+use std::path::Path;
+
 use clap::{Parser, Subcommand};
 
 use self::csv::CsvOpts;
@@ -28,4 +30,35 @@ pub enum SubCommand {
     //这是因为Base64SubCommand 是 Base64的子命令，Base64下面又分化了2个子命令，所以这里要标注command成subcommand
     #[command(subcommand)]
     Base64(Base64SubCommand),
+}
+
+/**
+ * 校验； 如果输入是文件路径，则校验路径是否存在
+ */
+fn valid_input_path(filename: &str) -> Result<String, &'static str> {
+    //改造，以适配 base64 的标准输入“-”
+    //字符串直接用等比较
+    if filename == "-" || Path::new(filename).exists() {
+        Ok(filename.into())
+    } else {
+        Err("File does not exist")
+    }
+}
+
+//第一个单元测试
+//cfg(test) 就是 当前代码仅测试模式下有效
+//执行测试的命令 ：  cargo nextest run -- test_valid_input_path
+// 可以指定执行的测试方法， 也可以全部执行（ cargo nextest run ）
+//测试方法和被测试的方法放一起，当作代码规约
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_valid_input_path() {
+        assert_eq!(valid_input_path("-"), Ok("-".into()));
+        assert_eq!(valid_input_path("*"), Err("File does not exist"));
+        assert_eq!(valid_input_path("Cargo.toml"), Ok("Cargo.toml".into()));
+        assert_eq!(valid_input_path("not-exist"), Err("File does not exist"));
+    }
 }

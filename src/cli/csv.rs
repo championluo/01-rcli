@@ -1,5 +1,7 @@
 use clap::Parser;
-use std::{fmt, path::Path, str::FromStr};
+use std::{fmt, str::FromStr};
+
+use super::valid_input_path; //注意这个super
 
 #[derive(Debug, Parser)]
 pub struct CsvOpts {
@@ -27,18 +29,18 @@ fn parse_format(format: &str) -> Result<OutputFormat, anyhow::Error> {
     format.parse()
 }
 
-//出参还可以是静态类型， 静态类型就是直接使用方法区中字符串的字面值常量，其生命周期和应用存活期间一致
-fn valid_input_path(filename: &str) -> Result<String, &'static str> {
-    if Path::new(filename).exists() {
-        //into就是filename进去堆空间
-        Ok(filename.into())
-    } else {
-        // Err(format!("file not found", filename))
-        //这里into函数可以简化
-        // Err("file not found".into())
-        Err("file not found")
-    }
-}
+// //出参还可以是静态类型， 静态类型就是直接使用方法区中字符串的字面值常量，其生命周期和应用存活期间一致
+// fn valid_input_path(filename: &str) -> Result<String, &'static str> {
+//     if Path::new(filename).exists() {
+//         //into就是filename进去堆空间
+//         Ok(filename.into())
+//     } else {
+//         // Err(format!("file not found", filename))
+//         //这里into函数可以简化
+//         // Err("file not found".into())
+//         Err("file not found")
+//     }
+// }
 
 #[derive(Debug, Clone, Copy)]
 pub enum OutputFormat {

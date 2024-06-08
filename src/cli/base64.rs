@@ -1,5 +1,7 @@
 use clap::{Parser, Subcommand};
 
+use super::valid_input_path;
+
 #[derive(Debug, Subcommand)]
 pub enum Base64SubCommand {
     //cargo run -- base64 encode -i abc
@@ -12,12 +14,14 @@ pub enum Base64SubCommand {
 
 #[derive(Debug, Parser)]
 pub struct Base65EncodeOpts {
-    #[arg(short, long)]
+    //default_value = "-" 代表的意思是默认从标准输入中获取
+    #[arg(short, long, value_parser = valid_input_path, default_value = "-")]
     pub input: String,
 }
 
 #[derive(Debug, Parser)]
 pub struct Base65DecodeOpts {
-    #[arg(short, long)]
+    //default_value = "-" 代表的意思是默认从标准输入中获取
+    #[arg(short, long, value_parser = valid_input_path, default_value = "-")]
     pub output: String,
 }
