@@ -11,31 +11,22 @@ pub enum OutputFormat {
     Toml,
 }
 
-impl fmt::Display for OutputFormat {
-    /**
-     * 大模型的解释
-     * fmt 函数是 Display trait 需要实现的核心方法，它接收两个参数：
-     *  &self：表示对当前 OutputFormat 实例的引用，允许我们在不转移所有权的情况下访问其实例数据。
-     *  f: &mut fmt::Formatter<'_>：是一个可变引用到 Formatter 对象，它携带了关于如何格式化输出的信息，
-     *       包括缓冲区、对齐方式、宽度等。'_ 是一个生命周期标注，表明 Formatter 的生命周期与调用者相同。
-     * 函数的返回类型是 fmt::Result，这是 Rust 标准库中对格式化操作成功或失败的标准返回类型，
-     *  通常表示为 Ok(()) 表示成功，或 Err(fmt::Error) 表示失败。
-     */
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // 这行代码使用 write! 宏向 f（即 Formatter 的实例）写入格式化的字符串。
-        // 它的工作原理类似于 println!，但不换行，并且目标是 Formatter 而不是标准输出。
+#[derive(Debug, Parser)]
+pub struct GenPassOpts {
+    #[arg(short, long, default_value_t = 16)]
+    pub length: u8,
 
-        //Into::<&'static str>::into(*self)：这部分代码将 self（即 OutputFormat 的实例）
-        // 转换为一个 &'static str 类型的引用。into会调用from函数，而我们已经为OutputFormat实现了From
-        //——  *self解引用 self（因为 self 是引用类型），然后通过 Into trait 转换为指定类型。
+    #[arg(long, default_value_t = true)]
+    pub uppercase: bool,
 
-        //最后，write! 宏内部会处理格式化字符串和变量的插入，确保输出到 f 的内容符合预期，
-        //并且返回一个 fmt::Result 表明操作是否成功。
-        // write!(f,"{}",Into::<&'static str>::into(*self))
+    #[arg(long, default_value_t = true)]
+    pub lowercase: bool,
 
-        //&'static可以不要， 因为不关心str的生命周期，使用完即止
-        write!(f, "{}", Into::<&str>::into(*self))
-    }
+    #[arg(long, default_value_t = true)]
+    pub number: bool,
+
+    #[arg(long, default_value_t = true)]
+    pub symbol: bool,
 }
 
 #[derive(Debug, Parser)]
@@ -100,6 +91,9 @@ pub struct Opts {
 pub enum SubCommand {
     #[command(name = "csv", about = "Show Csv, or Convert CSV to other formats")]
     Csv(CsvOpts),
+    //1 先生成一个新的子命令
+    #[command(name = "genpass", about = "Generate random password")]
+    GenPass(GenPassOpts),
 }
 
 //出参还可以是静态类型， 静态类型就是直接使用方法区中字符串的字面值常量，其生命周期和应用存活期间一致
@@ -112,5 +106,32 @@ fn valid_input_path(filename: &str) -> Result<String, &'static str> {
         //这里into函数可以简化
         // Err("file not found".into())
         Err("file not found")
+    }
+}
+
+impl fmt::Display for OutputFormat {
+    /**
+     * 大模型的解释
+     * fmt 函数是 Display trait 需要实现的核心方法，它接收两个参数：
+     *  &self：表示对当前 OutputFormat 实例的引用，允许我们在不转移所有权的情况下访问其实例数据。
+     *  f: &mut fmt::Formatter<'_>：是一个可变引用到 Formatter 对象，它携带了关于如何格式化输出的信息，
+     *       包括缓冲区、对齐方式、宽度等。'_ 是一个生命周期标注，表明 Formatter 的生命周期与调用者相同。
+     * 函数的返回类型是 fmt::Result，这是 Rust 标准库中对格式化操作成功或失败的标准返回类型，
+     *  通常表示为 Ok(()) 表示成功，或 Err(fmt::Error) 表示失败。
+     */
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // 这行代码使用 write! 宏向 f（即 Formatter 的实例）写入格式化的字符串。
+        // 它的工作原理类似于 println!，但不换行，并且目标是 Formatter 而不是标准输出。
+
+        //Into::<&'static str>::into(*self)：这部分代码将 self（即 OutputFormat 的实例）
+        // 转换为一个 &'static str 类型的引用。into会调用from函数，而我们已经为OutputFormat实现了From
+        //——  *self解引用 self（因为 self 是引用类型），然后通过 Into trait 转换为指定类型。
+
+        //最后，write! 宏内部会处理格式化字符串和变量的插入，确保输出到 f 的内容符合预期，
+        //并且返回一个 fmt::Result 表明操作是否成功。
+        // write!(f,"{}",Into::<&'static str>::into(*self))
+
+        //&'static可以不要， 因为不关心str的生命周期，使用完即止
+        write!(f, "{}", Into::<&str>::into(*self))
     }
 }
