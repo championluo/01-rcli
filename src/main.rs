@@ -20,9 +20,8 @@ fn main() -> Result<()> {
             };
             process_csv(&opts.input, output, opts.format)?;
         }
-        //cargo run --genpass -l 8 --lowercase --uppercase --number --symbol
+        //cargo run -- genpass -l 8 --lowercase --uppercase --number --symbol
         SubCommand::GenPass(opts) => {
-            // println!("{:?}", opts);
             let _ = process_genpass(
                 opts.length,
                 opts.uppercase,
@@ -30,6 +29,10 @@ fn main() -> Result<()> {
                 opts.number,
                 opts.symbol,
             );
+        }
+        // cargo run -- base64
+        SubCommand::Base64(opts) => {
+            println!("{:?}", opts);
         }
     }
     Ok(())
