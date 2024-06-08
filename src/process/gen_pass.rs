@@ -1,6 +1,13 @@
 use rand::seq::SliceRandom;
 
 // use crate::opts::GenPassOpts;
+// pub const UPPER =
+
+const UPPER: &[u8; 25] = b"ABCDEFGHJKLMNOPQRSTUVWXYZ";
+const LOWERCASE: &[u8; 25] = b"abcdefghijkmnopqrstuvwxyz";
+const NUMBER: &[u8; 9] = b"123456789"; //去掉数字0
+const SYMBOL: &[u8; 9] = b"!@#$%^&*_"; //选择少量不会引发歧义的symbols
+                                       // chars.extend_from_slice(b"!@#$%^&*()_+-=[]{}|;:,.<>?");
 
 pub fn process_genpass(
     length: u8,
@@ -10,36 +17,60 @@ pub fn process_genpass(
     symbol: bool,
 ) -> anyhow::Result<()> {
     let mut thread_rng = rand::thread_rng();
-    let mut password = String::new();
+    // let mut password = String::new();
+    let mut password = Vec::new();
     let mut chars = Vec::new();
 
     if uppercase {
         //去掉大写的I和O，视觉上引发歧义的字母删除
-        chars.extend_from_slice(b"ABCDEFGHJKLMNOPQRSTUVWXYZ");
+        chars.extend_from_slice(UPPER);
+        //注意这里要 *是解引用, 因为UPPER 是应用类型
+        password.push(
+            *UPPER
+                .choose(&mut thread_rng)
+                .expect("Ignore Null Exception"),
+        );
     }
     if lowercase {
         //去掉小写的l
-        chars.extend_from_slice(b"abcdefghijkmnopqrstuvwxyz");
+        chars.extend_from_slice(LOWERCASE);
+        password.push(
+            *LOWERCASE
+                .choose(&mut thread_rng)
+                .expect("Ignore Null Exception"),
+        );
     }
     if number {
-        //去掉数字0
-        chars.extend_from_slice(b"123456789");
+        chars.extend_from_slice(NUMBER);
+        password.push(
+            *NUMBER
+                .choose(&mut thread_rng)
+                .expect("Ignore Null Exception"),
+        );
     }
     if symbol {
-        //选择少量不会引发歧义的symbols
-        // chars.extend_from_slice(b"!@#$%^&*()_+-=[]{}|;:,.<>?");
-        chars.extend_from_slice(b"!@#$%^&*_");
+        chars.extend_from_slice(SYMBOL);
+        password.push(
+            *SYMBOL
+                .choose(&mut thread_rng)
+                .expect("Ignore Null Exception"),
+        );
     }
 
-    for _ in 0..length {
+    //注意这里的length 需要减去password已经有的长度
+    for _ in 0..(length as usize - password.len()) {
         // let index = thread_rng.gen_range(0..chars.len());
         // password.push(chars[index] as char);
         let c = chars.choose(&mut thread_rng).expect("empty char set");
-        password.push(*c as char); //这里使用 *c 解引用, 又因为chars是u8类型，所以需要转成char类型，
-                                   //且无需clone， u8类型解引用的时候会自动拷贝
+        // password.push(*c as char); //这里使用 *c 解引用, 又因为chars是u8类型，所以需要转成char类型，
+        //    且无需clone， u8类型解引用的时候会自动拷贝
+        password.push(*c)
     }
 
-    println!("Password: {}", password);
+    //最后,因为password有确定的模式, 即前4个字符是固定组合, 这里重新洗牌
+    password.shuffle(&mut thread_rng);
+
+    println!("Password: {}", String::from_utf8(password)?);
 
     Ok(())
 }
