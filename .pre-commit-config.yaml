@@ -37,6 +37,7 @@ repos:
         entry: bash -c 'typos'
         language: rust
         files: \.*$
+        exclude_types: [text]
         pass_filenames: false
       - id: cargo-check
         name: cargo check

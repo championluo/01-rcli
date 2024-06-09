@@ -1,3 +1,4 @@
+use anyhow::Result;
 use std::fs::File;
 use std::io::Read;
 
@@ -6,16 +7,18 @@ use base64::prelude::*;
 
 use crate::cli::Base64Format;
 
-pub fn base64_encode(input: &str, format: Base64Format) -> anyhow::Result<()> {
+pub fn base64_encode(input: &str, format: Base64Format) -> Result<()> {
     // println!("input:{},format:{}", input,format);
     //if-else 返回需要相同类型
     //使用box消除2个返回不同类型的差异
-    let mut reader: Box<dyn Read> = if input == "-" {
-        //结束输入： window下 按 ctrl + z
-        Box::new(std::io::stdin())
-    } else {
-        Box::new(File::open(input)?)
-    };
+    // let mut reader: Box<dyn Read> = if input == "-" {
+    //     //结束输入： window下 按 ctrl + z
+    //     Box::new(std::io::stdin())
+    // } else {
+    //     Box::new(File::open(input)?)
+    // };
+
+    let mut reader = get_reader(input)?;
 
     let mut buf = Vec::new();
     reader.read_to_end(&mut buf)?;
@@ -34,12 +37,8 @@ pub fn base64_encode(input: &str, format: Base64Format) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn base64_decode(input: &str, format: Base64Format) -> anyhow::Result<()> {
-    let mut reader: Box<dyn Read> = if input == "-" {
-        Box::new(std::io::stdin())
-    } else {
-        Box::new(File::open(input)?)
-    };
+pub fn base64_decode(input: &str, format: Base64Format) -> Result<()> {
+    let mut reader = get_reader(input)?;
 
     //因为解码的时候，读取到的是一行一行的字符串，需要改成read_to_string,并去掉换行符
     // let mut buf = Vec::new();
@@ -58,4 +57,35 @@ pub fn base64_decode(input: &str, format: Base64Format) -> anyhow::Result<()> {
     let decode = String::from_utf8(decode)?;
     print!("{}", decode);
     Ok(())
+}
+
+/**
+ * 通用获取输入的函数
+ */
+fn get_reader(input: &str) -> Result<Box<dyn Read>> {
+    let reader: Box<dyn Read> = if input == "-" {
+        Box::new(std::io::stdin())
+    } else {
+        Box::new(File::open(input)?)
+    };
+    Ok(reader)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_base64_encode() {
+        let input = "Cargo.toml";
+        let format = Base64Format::UrlSafe;
+        assert!(base64_encode(input, format).is_ok());
+    }
+
+    #[test]
+    fn test_base64_decode() {
+        let input = "fixtures/temp64.txt";
+        let format: Base64Format = Base64Format::UrlSafe;
+        assert!(base64_decode(input, format).is_ok());
+    }
 }
