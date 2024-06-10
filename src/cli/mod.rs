@@ -1,14 +1,15 @@
 mod base64;
 mod csv;
 mod genpass;
-
-use std::path::Path;
+mod text;
 
 use clap::{Parser, Subcommand};
 
 use self::csv::CsvOpts;
 pub use self::{base64::*, csv::OutputFormat};
+use crate::valid_path;
 use genpass::GenPassOpts;
+pub use text::{TextSignFormat, TextSignOpts, TextSubCommand, TextVerifyOpts};
 
 #[derive(Debug, Parser)] //相当于注解，打上标识的结构体再特定场景下会有特别处理
 #[command{name="rcli", version, author, about, long_about = None}]
@@ -30,19 +31,9 @@ pub enum SubCommand {
     //这是因为Base64SubCommand 是 Base64的子命令，Base64下面又分化了2个子命令，所以这里要标注command成subcommand
     #[command(subcommand)]
     Base64(Base64SubCommand),
-}
 
-/**
- * 校验； 如果输入是文件路径，则校验路径是否存在
- */
-fn valid_input_path(filename: &str) -> Result<String, &'static str> {
-    //改造，以适配 base64 的标准输入“-”
-    //字符串直接用等比较
-    if filename == "-" || Path::new(filename).exists() {
-        Ok(filename.into())
-    } else {
-        Err("File does not exist")
-    }
+    #[command(subcommand)]
+    Text(TextSubCommand),
 }
 
 //第一个单元测试
@@ -56,9 +47,9 @@ mod tests {
 
     #[test]
     fn test_valid_input_path() {
-        assert_eq!(valid_input_path("-"), Ok("-".into()));
-        assert_eq!(valid_input_path("*"), Err("File does not exist"));
-        assert_eq!(valid_input_path("Cargo.toml"), Ok("Cargo.toml".into()));
-        assert_eq!(valid_input_path("not-exist"), Err("File does not exist"));
+        assert_eq!(valid_path("-"), Ok("-".into()));
+        assert_eq!(valid_path("*"), Err("File does not exist"));
+        assert_eq!(valid_path("Cargo.toml"), Ok("Cargo.toml".into()));
+        assert_eq!(valid_path("not-exist"), Err("File does not exist"));
     }
 }

@@ -2,22 +2,22 @@ use std::{fmt::Display, str::FromStr};
 
 use clap::{Parser, Subcommand};
 
-use super::valid_input_path;
+use super::valid_path;
 
 #[derive(Debug, Subcommand)]
 pub enum Base64SubCommand {
     //cargo run -- base64 encode -i abc
     #[command(name = "encode", about = "Encode base64 strings")]
-    Encode(Base65EncodeOpts),
+    Encode(Base64EncodeOpts),
     //cargo run -- base64 decode -o abc
     #[command(name = "decode", about = "Decode base64 strings")]
-    Decode(Base65DecodeOpts),
+    Decode(Base64DecodeOpts),
 }
 
 #[derive(Debug, Parser)]
-pub struct Base65EncodeOpts {
+pub struct Base64EncodeOpts {
     //default_value = "-" 代表的意思是默认从标准输入中获取
-    #[arg(short, long, value_parser = valid_input_path, default_value = "-")]
+    #[arg(short, long, value_parser = valid_path, default_value = "-")]
     pub input: String,
 
     //cargo run -- base64 encode -i assets/meinvpic.jpeg --format urlsafe
@@ -26,9 +26,9 @@ pub struct Base65EncodeOpts {
 }
 
 #[derive(Debug, Parser)]
-pub struct Base65DecodeOpts {
+pub struct Base64DecodeOpts {
     //default_value = "-" 代表的意思是默认从标准输入中获取
-    #[arg(short, long, value_parser = valid_input_path, default_value = "-")]
+    #[arg(short, long, value_parser = valid_path, default_value = "-")]
     pub output: String,
 
     #[arg(long, value_parser = parse_base64_format, default_value = "standard")]
