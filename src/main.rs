@@ -1,11 +1,13 @@
-//rcli csv -i input.csv -o output.json --header -d ','
+use std::fs;
 
+//rcli csv -i input.csv -o output.json --header -d ','
 use anyhow::Result;
 use clap::Parser;
 use rcli::{
-    base64_decode, base64_encode, process_csv, process_genpass, process_sign, process_text_verify,
-    Base64SubCommand, Opts, SubCommand, TextSubCommand,
+    base64_decode, base64_encode, process_csv, process_genpass, process_sign,
+    process_text_generate, process_text_verify, Base64SubCommand, Opts, SubCommand, TextSubCommand,
 };
+use zxcvbn::zxcvbn;
 
 fn main() -> Result<()> {
     let opts = Opts::parse();
@@ -24,21 +26,40 @@ fn main() -> Result<()> {
         }
         //cargo run -- genpass -l 8 --lowercase --uppercase --number --symbol
         SubCommand::GenPass(opts) => {
-            let _ = process_genpass(
+            let password = process_genpass(
                 opts.length,
                 opts.uppercase,
                 opts.lowercase,
                 opts.number,
                 opts.symbol,
-            );
+            )?;
+            //打印动作放到main中
+            println!("{}", password);
+
+            let estimate = zxcvbn(&password, &[]);
+            //注意这里使用的是标准错误数据
+            // cargo run -- genpass -l 16 > out.txt
+            //这里打印到txt文件中只有上面的 标准输出, 这里的标准错误输出只会在终端显示
+            eprintln!("Password strength: {}", estimate.score());
         }
         // cargo run -- base64 encode|decode
         SubCommand::Base64(subcmd) => match subcmd {
             Base64SubCommand::Encode(opts) => {
-                base64_encode(&opts.input, opts.format)?;
+                let encode = base64_encode(&opts.input, opts.format)?;
+                //解码命令 cargo run -- base64 decode -o temp64.txt --format urlsafe
+                //注意，这么写decode会报错 Error: Invalid symbol 10, offset 736.
+                //cargo run -- base64 encode -i Cargo.toml --format urlsafe > temp64.txt
+                // 使用上面这个命令， 会把 Encoded: 也输出到 文件中， 导致解码失败
+                // println!("Encoded: {}", encode);
+                println!("{}", encode);
             }
             Base64SubCommand::Decode(opts) => {
-                base64_decode(&opts.output, opts.format)?;
+                let decode = base64_decode(&opts.output, opts.format)?;
+
+                // let decode = URL_SAFE.decode(input)?;
+                //TODO: decoded data might not be string (but for this example, we assume it is)
+                let decode: String = String::from_utf8(decode)?;
+                print!("{}", decode);
             }
         },
         // cargo run -- text sign|verify
@@ -46,12 +67,36 @@ fn main() -> Result<()> {
             TextSubCommand::Sign(opts) => {
                 //注意这里加签需要区分format类型
                 //测试命令 cargo run -- text sign -k fixtures/blake3.txt
-                process_sign(&opts.input, &opts.key, opts.format)?;
+                let process_sign = process_sign(&opts.input, &opts.key, opts.format)?;
+                println!("{}", process_sign);
             }
             TextSubCommand::Verify(opts) => {
                 println!("{:?}", opts);
                 //测试命令 cargo run -- text verify -k fixtures/blake3.txt --sig 4dynUr9DyxEt8EjPi0OF1lHyPmCB_et6_Fty6hmmqjI
-                process_text_verify(&opts.input, &opts.key, opts.format, &opts.sig)?;
+                let verify_result =
+                    process_text_verify(&opts.input, &opts.key, opts.format, &opts.sig)?;
+                println!("{}", verify_result);
+            }
+            TextSubCommand::Generate(opts) => {
+                println!("{:?}", opts);
+                let key = process_text_generate(opts.format)?;
+                //这里要把结果能够输出到文件中
+                //根据不同类型,把返回写到文件中
+                match opts.format {
+                    //cargo run -- text generate -o fixtures
+                    //可以在fixtures文件夹中看到生成的blake3 的密钥
+                    rcli::TextSignFormat::Blake3 => {
+                        let name = opts.output.join("blake3.txt");
+                        fs::write(name, &key[0])?;
+                    }
+                    //cargo run -- text generate -o fixtures -f ed25519
+                    //可以在fixtures文件夹中看到生成的私钥和公钥
+                    rcli::TextSignFormat::Ed25519 => {
+                        let name = &opts.output;
+                        fs::write(name.join("ed25519.sk"), &key[0])?;
+                        fs::write(name.join("ed25519.pk"), &key[1])?;
+                    }
+                }
             }
         },
     }

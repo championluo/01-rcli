@@ -1,5 +1,4 @@
 use rand::seq::SliceRandom;
-use zxcvbn::zxcvbn; //注意这里一定要引入zxcvbn库
 
 // use crate::opts::GenPassOpts;
 // pub const UPPER =
@@ -16,7 +15,7 @@ pub fn process_genpass(
     lowercase: bool,
     number: bool,
     symbol: bool,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<String> {
     let mut thread_rng = rand::thread_rng();
     // let mut password = String::new();
     let mut password_vec = Vec::new();
@@ -72,13 +71,5 @@ pub fn process_genpass(
     password_vec.shuffle(&mut thread_rng);
 
     let password = String::from_utf8(password_vec)?;
-    println!("{}", password);
-
-    let estimate = zxcvbn(&password, &[]);
-    //注意这里使用的是标准错误数据
-    // cargo run -- genpass -l 16 > out.txt
-    //这里打印到txt文件中只有上面的 标准输出, 这里的标准错误输出只会在终端显示
-    eprintln!("Password strength: {}", estimate.score());
-
-    Ok(())
+    Ok(password)
 }

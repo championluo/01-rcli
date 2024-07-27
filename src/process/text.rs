@@ -1,9 +1,9 @@
-use crate::{get_reader, TextSignFormat};
+use crate::{get_reader, process_genpass, TextSignFormat};
 use anyhow::Result;
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
+use rand::rngs::OsRng;
 use std::{fs, io::Read, path::Path};
-
 /**
  * 生成签名接口
  */
@@ -33,6 +33,14 @@ trait KeyLoader {
     where
         Self: Sized; //这个where中的Sized 是个marker trait， 表示一种约束，返回的self一定要是定长的
                      //大部分的数据结构都是定长的, 处理 [u8] ,str 这种是不定长的
+}
+
+pub trait KeyGenerator {
+    //非对称加密生成的是一对key， 对称加密生成的是1个key
+    //如何兼容？ 再在外面包一层Vec， 也就是 Vec<Vec<u8>> 这样
+    // 对于blake3， 只要生成1个key
+    // 对于ed25， 则要生成一对key
+    fn generate() -> Result<Vec<Vec<u8>>>;
 }
 
 //定义结构体, 实现这2个impl接口
@@ -111,7 +119,7 @@ impl KeyLoader for Ed25519Verifier {
     }
 }
 
-pub fn process_sign(input: &str, key: &str, format: TextSignFormat) -> Result<()> {
+pub fn process_sign(input: &str, key: &str, format: TextSignFormat) -> Result<String> {
     let mut reader = get_reader(input)?;
     // let mut buf = Vec::new();
     // reader.read_to_end(&mut buf)?;
@@ -123,7 +131,7 @@ pub fn process_sign(input: &str, key: &str, format: TextSignFormat) -> Result<()
             // let key = key.try_into()?;
             // //unwrap()用于将Result结果转化OK的泛型类型
             // // let key = key.try_into().unwrap();
-            // //新建Blak3实例
+            // //新建Blake3实例
             // let signer = Blake3 { key };
             let signer = Blake3::load(key)?; //这里可以精简代码
                                              //调用sign方法
@@ -143,8 +151,7 @@ pub fn process_sign(input: &str, key: &str, format: TextSignFormat) -> Result<()
     };
     //对输入的数据通过blake3 hash之后,再统一使用base64编码, 最终做成签名
     let encode = URL_SAFE_NO_PAD.encode(signed);
-    println!("{}", encode);
-    Ok(())
+    Ok(encode)
 }
 
 pub fn process_text_verify(
@@ -152,7 +159,7 @@ pub fn process_text_verify(
     key: &str,
     format: TextSignFormat,
     sig: &str,
-) -> Result<()> {
+) -> Result<bool> {
     let reader = get_reader(input)?;
     let sig: Vec<u8> = URL_SAFE_NO_PAD.decode(sig)?;
     let verify_result: bool = match format {
@@ -165,8 +172,14 @@ pub fn process_text_verify(
             verify.verify(reader, &sig)?
         }
     };
-    println!("{}", verify_result);
-    Ok(())
+    Ok(verify_result)
+}
+
+pub fn process_text_generate(format: TextSignFormat) -> Result<Vec<Vec<u8>>> {
+    match format {
+        TextSignFormat::Blake3 => Blake3::generate(),
+        TextSignFormat::Ed25519 => Ed25519Signer::generate(),
+    }
 }
 
 impl TextSign for Blake3 {
@@ -219,13 +232,34 @@ impl TextVerify for Ed25519Verifier {
     }
 }
 
+impl KeyGenerator for Blake3 {
+    fn generate() -> Result<Vec<Vec<u8>>> {
+        // let key = process_genpass()
+        let key = process_genpass(32, true, true, true, true)?;
+        let key = key.as_bytes().to_vec();
+        Ok(vec![key])
+    }
+}
+
+impl KeyGenerator for Ed25519Signer {
+    fn generate() -> Result<Vec<Vec<u8>>> {
+        let mut csprng = OsRng;
+        let sk: SigningKey = SigningKey::generate(&mut csprng);
+        //注意这里还要调用下verifying_key()方法, 才能拿到私钥
+        let pk = sk.verifying_key().as_bytes().to_vec();
+        //公钥
+        let sk = sk.to_bytes().to_vec();
+        Ok(vec![sk, pk])
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
     use super::*;
 
     #[test]
-    fn test_blak3_sign_and_verify() -> Result<()> {
+    fn test_blake3_sign_and_verify() -> Result<()> {
         let blake3 = Blake3::load("fixtures/blake3.txt")?;
 
         let data = b"hello";

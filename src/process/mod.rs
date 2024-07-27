@@ -6,4 +6,4 @@ mod text;
 pub use b64::{base64_decode, base64_encode};
 pub use csv_convert::process_csv;
 pub use gen_pass::process_genpass;
-pub use text::{process_sign, process_text_verify};
+pub use text::{process_sign, process_text_generate, process_text_verify};

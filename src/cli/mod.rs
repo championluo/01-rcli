@@ -7,7 +7,7 @@ use clap::{Parser, Subcommand};
 
 use self::csv::CsvOpts;
 pub use self::{base64::*, csv::OutputFormat};
-use crate::valid_path;
+use crate::valid_file;
 use genpass::GenPassOpts;
 pub use text::{TextSignFormat, TextSignOpts, TextSubCommand, TextVerifyOpts};
 
@@ -47,9 +47,9 @@ mod tests {
 
     #[test]
     fn test_valid_input_path() {
-        assert_eq!(valid_path("-"), Ok("-".into()));
-        assert_eq!(valid_path("*"), Err("File does not exist"));
-        assert_eq!(valid_path("Cargo.toml"), Ok("Cargo.toml".into()));
-        assert_eq!(valid_path("not-exist"), Err("File does not exist"));
+        assert_eq!(valid_file("-"), Ok("-".into()));
+        assert_eq!(valid_file("*"), Err("File does not exist"));
+        assert_eq!(valid_file("Cargo.toml"), Ok("Cargo.toml".into()));
+        assert_eq!(valid_file("not-exist"), Err("File does not exist"));
     }
 }

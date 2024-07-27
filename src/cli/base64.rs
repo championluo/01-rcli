@@ -2,7 +2,7 @@ use std::{fmt::Display, str::FromStr};
 
 use clap::{Parser, Subcommand};
 
-use super::valid_path;
+use super::valid_file;
 
 #[derive(Debug, Subcommand)]
 pub enum Base64SubCommand {
@@ -17,7 +17,7 @@ pub enum Base64SubCommand {
 #[derive(Debug, Parser)]
 pub struct Base64EncodeOpts {
     //default_value = "-" 代表的意思是默认从标准输入中获取
-    #[arg(short, long, value_parser = valid_path, default_value = "-")]
+    #[arg(short, long, value_parser = valid_file, default_value = "-")]
     pub input: String,
 
     //cargo run -- base64 encode -i assets/meinvpic.jpeg --format urlsafe
@@ -28,7 +28,7 @@ pub struct Base64EncodeOpts {
 #[derive(Debug, Parser)]
 pub struct Base64DecodeOpts {
     //default_value = "-" 代表的意思是默认从标准输入中获取
-    #[arg(short, long, value_parser = valid_path, default_value = "-")]
+    #[arg(short, long, value_parser = valid_file, default_value = "-")]
     pub output: String,
 
     #[arg(long, value_parser = parse_base64_format, default_value = "standard")]

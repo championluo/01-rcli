@@ -1,11 +1,11 @@
 use clap::Parser;
 use std::{fmt, str::FromStr};
 
-use super::valid_path; //注意这个super
+use super::valid_file; //注意这个super
 
 #[derive(Debug, Parser)]
 pub struct CsvOpts {
-    #[arg(short, long, value_parser = valid_path)]
+    #[arg(short, long, value_parser = valid_file)]
     pub input: String,
 
     // #[arg(short, long, default_value = "output.json")]

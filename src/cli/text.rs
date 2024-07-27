@@ -1,6 +1,8 @@
-use super::valid_path;
+use crate::valid_file;
+use crate::valid_path;
+use anyhow::Result;
 use clap::{Parser, Subcommand};
-use std::{fmt::Display, str::FromStr};
+use std::{fmt::Display, path::PathBuf, str::FromStr};
 
 #[derive(Debug, Subcommand)]
 pub enum TextSubCommand {
@@ -10,6 +12,9 @@ pub enum TextSubCommand {
     //cargo run -- text verify -o abc
     #[command(about = "Verify a signed message")]
     Verify(TextVerifyOpts),
+
+    #[command(about = "generate text key")]
+    Generate(TextKeyGenerateOpts),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -21,12 +26,12 @@ pub enum TextSignFormat {
 #[derive(Debug, Parser)]
 pub struct TextSignOpts {
     //default_value = "-" 代表的意思是默认从标准输入中获取
-    #[arg(short, long, value_parser = valid_path, default_value = "-")]
+    #[arg(short, long, value_parser = valid_file, default_value = "-")]
     pub input: String,
 
     //这里不用加 , default_value = "-"
     //因为 input 已经默认了从标准输入输入，这里再默认标准输入就会冲突
-    #[arg(short, long, value_parser = valid_path)]
+    #[arg(short, long, value_parser = valid_file)]
     pub key: String,
 
     #[arg(long,default_value = "blake3", value_parser = parse_format)]
@@ -36,10 +41,10 @@ pub struct TextSignOpts {
 #[derive(Debug, Parser)]
 pub struct TextVerifyOpts {
     //default_value = "-" 代表的意思是默认从标准输入中获取
-    #[arg(short, long, value_parser = valid_path, default_value = "-")]
+    #[arg(short, long, value_parser = valid_file, default_value = "-")]
     pub input: String,
 
-    #[arg(short, long, value_parser = valid_path)]
+    #[arg(short, long, value_parser = valid_file)]
     pub key: String,
 
     #[arg(short, long, default_value = "blake3", value_parser = parse_format)]
@@ -79,4 +84,12 @@ impl Display for TextSignFormat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", Into::<&'static str>::into(*self))
     }
+}
+
+#[derive(Debug, Parser)]
+pub struct TextKeyGenerateOpts {
+    #[arg(short, long, default_value = "blake3", value_parser = parse_format)]
+    pub format: TextSignFormat,
+    #[arg(short,long,value_parser = valid_path)]
+    pub output: PathBuf,
 }
