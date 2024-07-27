@@ -72,7 +72,7 @@ pub fn process_genpass(
     password_vec.shuffle(&mut thread_rng);
 
     let password = String::from_utf8(password_vec)?;
-    println!("Password: {}", password);
+    println!("{}", password);
 
     let estimate = zxcvbn(&password, &[]);
     //注意这里使用的是标准错误数据

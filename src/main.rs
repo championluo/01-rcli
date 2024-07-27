@@ -2,10 +2,9 @@
 
 use anyhow::Result;
 use clap::Parser;
-// use rcli::{process_csv, Opts, SubCommand};
 use rcli::{
-    base64_decode, base64_encode, process_csv, process_genpass, Base64SubCommand, Opts, SubCommand,
-    TextSubCommand,
+    base64_decode, base64_encode, process_csv, process_genpass, process_sign, process_text_verify,
+    Base64SubCommand, Opts, SubCommand, TextSubCommand,
 };
 
 fn main() -> Result<()> {
@@ -45,10 +44,14 @@ fn main() -> Result<()> {
         // cargo run -- text sign|verify
         SubCommand::Text(subcmd) => match subcmd {
             TextSubCommand::Sign(opts) => {
-                println!("{:?}", opts)
+                //注意这里加签需要区分format类型
+                //测试命令 cargo run -- text sign -k fixtures/blake3.txt
+                process_sign(&opts.input, &opts.key, opts.format)?;
             }
             TextSubCommand::Verify(opts) => {
-                println!("{:?}", opts)
+                println!("{:?}", opts);
+                //测试命令 cargo run -- text verify -k fixtures/blake3.txt --sig 4dynUr9DyxEt8EjPi0OF1lHyPmCB_et6_Fty6hmmqjI
+                process_text_verify(&opts.input, &opts.key, opts.format, &opts.sig)?;
             }
         },
     }

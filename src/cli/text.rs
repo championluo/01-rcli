@@ -42,7 +42,7 @@ pub struct TextVerifyOpts {
     #[arg(short, long, value_parser = valid_path)]
     pub key: String,
 
-    #[arg(long,default_value = "blake3", value_parser = parse_format)]
+    #[arg(short, long, default_value = "blake3", value_parser = parse_format)]
     pub format: TextSignFormat,
 
     #[arg(short, long)]
