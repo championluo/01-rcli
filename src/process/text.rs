@@ -256,6 +256,8 @@ impl KeyGenerator for Ed25519Signer {
 #[cfg(test)]
 mod tests {
 
+    // use core::fmt::ToString;
+
     use super::*;
 
     #[test]
@@ -268,6 +270,20 @@ mod tests {
         println!("{}", URL_SAFE_NO_PAD.encode(sign.clone()));
         let res = blake3.verify(&mut &data[..], &sign)?;
         assert!(res);
+        Ok(())
+    }
+
+    //cargo nextest run -- test_ed25519_sign_verify
+    #[test]
+    fn test_ed25519_sign_verify() -> Result<()> {
+        let vec = fs::read("fixtures/ed25519.sk")?;
+        let key: [u8; 32] = vec.try_into().unwrap();
+        let sk = Ed25519Signer::try_new(&key)?;
+        let pk = Ed25519Verifier::load("fixtures/ed25519.pk")?;
+
+        let data = b"hello world";
+        let sign = sk.sign(&mut &data[..])?;
+        assert!(pk.verify(&mut &data[..], &sign)?);
         Ok(())
     }
 }
