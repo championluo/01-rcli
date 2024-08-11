@@ -1,11 +1,12 @@
 use anyhow::Result;
 use axum::{
     extract::{Path, State},
+    http::StatusCode,
     routing::get,
     Router,
 };
 use std::{net::SocketAddr, path::PathBuf, sync::Arc};
-use tracing::info;
+use tracing::{info, warn};
 
 //定义一个结构体， 用于保存http服务的配置
 // 这里的path是PathBuf， 所以可以接收任何类型的文件路径， 包括目录
@@ -31,6 +32,7 @@ pub async fn process_http_serve(path: PathBuf, port: u16) -> Result<()> {
         .route("/*path", get(index_handler))
         //Arc的作用就是讲外部变量带入到异步线程中，会创建一个内存区域，所有传入这个state的异步线程的线程都可以访问到这个内存区域
         //直到state的引用计数归0，内存区域才会释放
+        //Arc的作用还有就是当 state 很大的时候, 直接使用clone会消耗内存,Arc只会clone 引用,消耗内存很少
         .with_state(Arc::new(state));
 
     //绑定路由和监听器
@@ -48,8 +50,29 @@ pub async fn process_http_serve(path: PathBuf, port: u16) -> Result<()> {
 async fn index_handler(
     State(state): State<Arc<HttpServeState>>,
     //注意这里的Path要使用 axum::extract::Path
+    //通过axum::extract, 可以传入任意类型的变量
     Path(path): Path<String>,
-) -> String {
-    //通过format！返回个String， 重启服务后，可以看到异步线程能够获取到 state 变量，并打印出来
-    format!("{:?}, {:?}", state, path)
+) -> (StatusCode, String) {
+    //通过将启动时候的参数dir和path拼接起来，得到具体的文件路径
+    let p = std::path::Path::new(&state.path).join(path);
+    info!("Read file {:?}", p);
+
+    if !p.exists() {
+        (
+            StatusCode::NOT_FOUND,
+            format!("File {} not found", p.display()),
+        )
+    } else {
+        //read_to_string 这里使用了 read_to_string, 如果文件是个二进制文件则会读取失败
+        match tokio::fs::read_to_string(p).await {
+            Ok(content) => {
+                info!("Read {} bytes", content.len());
+                (StatusCode::OK, content)
+            }
+            Err(e) => {
+                warn!("Error reading file: {:?}", e);
+                (StatusCode::INTERNAL_SERVER_ERROR, format!("Error: {}", e))
+            }
+        }
+    }
 }
