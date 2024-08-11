@@ -9,7 +9,7 @@ pub use cli::{
     TextSignFormat, TextSignOpts, TextSubCommand, TextVerifyOpts,
 };
 pub use process::{
-    base64_decode, base64_encode, process_csv, process_genpass, process_sign,
+    base64_decode, base64_encode, process_csv, process_genpass, process_http_serve, process_sign,
     process_text_generate, process_text_verify,
 };
 pub use utils::*;

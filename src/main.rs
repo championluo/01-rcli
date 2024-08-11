@@ -4,13 +4,15 @@ use std::fs;
 use anyhow::Result;
 use clap::Parser;
 use rcli::{
-    base64_decode, base64_encode, process_csv, process_genpass, process_sign,
+    base64_decode, base64_encode, process_csv, process_genpass, process_http_serve, process_sign,
     process_text_generate, process_text_verify, Base64SubCommand, HttpSubCommand, Opts, SubCommand,
     TextSubCommand,
 };
 use zxcvbn::zxcvbn;
 
 fn main() -> Result<()> {
+    //添加日志功能
+    tracing_subscriber::fmt::init();
     let opts = Opts::parse();
     match opts.cmd {
         //cargo run --csv -i assert/juventus.csv -f yaml
@@ -103,8 +105,9 @@ fn main() -> Result<()> {
         //cargo run -- http serve
         SubCommand::Http(subcmd) => match subcmd {
             HttpSubCommand::Serve(opts) => {
-                println!("{:?}", opts);
-                println!("Serving at http://0.0.0.0:{}", opts.port);
+                // println!("{:?}", opts);
+                // println!("Serving at http://0.0.0.0:{}", opts.port);\
+                process_http_serve(&opts.dir, opts.port)?;
             }
         },
     }
