@@ -5,7 +5,8 @@ use anyhow::Result;
 use clap::Parser;
 use rcli::{
     base64_decode, base64_encode, process_csv, process_genpass, process_sign,
-    process_text_generate, process_text_verify, Base64SubCommand, Opts, SubCommand, TextSubCommand,
+    process_text_generate, process_text_verify, Base64SubCommand, HttpSubCommand, Opts, SubCommand,
+    TextSubCommand,
 };
 use zxcvbn::zxcvbn;
 
@@ -97,6 +98,13 @@ fn main() -> Result<()> {
                         fs::write(name.join("ed25519.pk"), &key[1])?;
                     }
                 }
+            }
+        },
+        //cargo run -- http serve
+        SubCommand::Http(subcmd) => match subcmd {
+            HttpSubCommand::Serve(opts) => {
+                println!("{:?}", opts);
+                println!("Serving at http://0.0.0.0:{}", opts.port);
             }
         },
     }

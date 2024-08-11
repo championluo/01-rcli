@@ -1,6 +1,7 @@
 mod base64;
 mod csv;
 mod genpass;
+mod http;
 mod text;
 
 use clap::{Parser, Subcommand};
@@ -9,6 +10,7 @@ use self::csv::CsvOpts;
 pub use self::{base64::*, csv::OutputFormat};
 use crate::valid_file;
 use genpass::GenPassOpts;
+pub use http::HttpSubCommand;
 pub use text::{TextSignFormat, TextSignOpts, TextSubCommand, TextVerifyOpts};
 
 #[derive(Debug, Parser)] //相当于注解，打上标识的结构体再特定场景下会有特别处理
@@ -34,6 +36,9 @@ pub enum SubCommand {
 
     #[command(subcommand)]
     Text(TextSubCommand),
+
+    #[command(subcommand)]
+    Http(HttpSubCommand),
 }
 
 //第一个单元测试

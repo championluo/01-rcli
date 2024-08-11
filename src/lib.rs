@@ -5,8 +5,8 @@ mod process;
 mod utils;
 
 pub use cli::{
-    Base64DecodeOpts, Base64EncodeOpts, Base64SubCommand, Opts, SubCommand, TextSignFormat,
-    TextSignOpts, TextSubCommand, TextVerifyOpts,
+    Base64DecodeOpts, Base64EncodeOpts, Base64SubCommand, HttpSubCommand, Opts, SubCommand,
+    TextSignFormat, TextSignOpts, TextSubCommand, TextVerifyOpts,
 };
 pub use process::{
     base64_decode, base64_encode, process_csv, process_genpass, process_sign,
