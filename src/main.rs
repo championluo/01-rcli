@@ -10,7 +10,8 @@ use rcli::{
 };
 use zxcvbn::zxcvbn;
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     //添加日志功能
     tracing_subscriber::fmt::init();
     let opts = Opts::parse();
@@ -107,7 +108,10 @@ fn main() -> Result<()> {
             HttpSubCommand::Serve(opts) => {
                 // println!("{:?}", opts);
                 // println!("Serving at http://0.0.0.0:{}", opts.port);\
-                process_http_serve(&opts.dir, opts.port)?;
+
+                //因为process_http_serve已经是个async函数，所以这里要await,而要使用await，main函数需要是async的
+                //同时使用tokio main 来包装 main函数
+                process_http_serve(&opts.dir, opts.port).await?;
             }
         },
     }
