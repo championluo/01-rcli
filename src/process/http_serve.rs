@@ -37,7 +37,7 @@ pub async fn process_http_serve(path: PathBuf, port: u16) -> Result<()> {
     //绑定一个路由
     let router = Router::new()
         .nest_service("/tower", dir_service)
-        .route("/*path", get(index_handler))
+        .route("/*path", get(file_handler))
         .with_state(Arc::new(state));
 
     //绑定路由和监听器
@@ -52,7 +52,7 @@ pub async fn process_http_serve(path: PathBuf, port: u16) -> Result<()> {
 // State(state): State<Arc<HttpServeState>>
 // 这里直接写成这样称为 pattern match，可以直接match类型
 // 注意这里的返回值要改成 string, 因为入参 PathBuf 比起 path 的区别就是 PathBuf 里面相当于一个 string
-async fn index_handler(
+async fn file_handler(
     State(state): State<Arc<HttpServeState>>,
     //注意这里的Path要使用 axum::extract::Path
     //通过axum::extract, 可以传入任意类型的变量
@@ -79,5 +79,24 @@ async fn index_handler(
                 (StatusCode::INTERNAL_SERVER_ERROR, format!("Error: {}", e))
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_file_handler() {
+        let state = Arc::new(HttpServeState {
+            // path: PathBuf::from("src/process"),
+            path: PathBuf::from("."),
+        });
+        //这个方法会合并 路径， 并读取合并后路径指定的文件
+        let (status, content) =
+        // file_handler(State(state),Path("http_serve.rs".to_string())).await;
+        file_handler(State(state),Path("Cargo.toml".to_string())).await;
+        assert_eq!(status, StatusCode::OK);
+        assert!(content.trim().starts_with("[package]"));
     }
 }
