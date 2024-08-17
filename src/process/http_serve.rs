@@ -6,6 +6,7 @@ use axum::{
     Router,
 };
 use std::{net::SocketAddr, path::PathBuf, sync::Arc};
+use tower_http::services::ServeDir;
 use tracing::{info, warn};
 
 //定义一个结构体， 用于保存http服务的配置
@@ -24,15 +25,19 @@ pub async fn process_http_serve(path: PathBuf, port: u16) -> Result<()> {
     info!("Serving {:?} on port {}", path, addr);
 
     //先创建一个state
-    let state = HttpServeState { path };
+    let state = HttpServeState { path: path.clone() };
+
+    let dir_service = ServeDir::new(path)
+        .append_index_html_on_directories(true)
+        .precompressed_gzip()
+        .precompressed_br()
+        .precompressed_deflate()
+        .precompressed_zstd();
 
     //绑定一个路由
     let router = Router::new()
-        //这里加上*path， 表示匹配任意路径， 然后在路由中处理
+        .nest_service("/tower", dir_service)
         .route("/*path", get(index_handler))
-        //Arc的作用就是讲外部变量带入到异步线程中，会创建一个内存区域，所有传入这个state的异步线程的线程都可以访问到这个内存区域
-        //直到state的引用计数归0，内存区域才会释放
-        //Arc的作用还有就是当 state 很大的时候, 直接使用clone会消耗内存,Arc只会clone 引用,消耗内存很少
         .with_state(Arc::new(state));
 
     //绑定路由和监听器

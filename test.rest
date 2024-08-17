@@ -5,3 +5,8 @@ GET http://localhost:8080/abc
 ### 测试读取文件
 
 GET http://localhost:8080/fixtures/blake3.txt
+
+
+### Test static file with tower-http
+GET http://localhost:8080/tower/Cargo.toml
+Range: bytes=0-100
