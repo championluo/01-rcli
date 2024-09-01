@@ -4,11 +4,10 @@ mod genpass;
 mod http;
 mod text;
 
-use clap::{Parser, Subcommand};
-
 use self::csv::CsvOpts;
 pub use self::{base64::*, csv::OutputFormat};
-use crate::valid_file;
+use crate::{valid_file, CmdExecutor};
+use clap::{Parser, Subcommand};
 use genpass::GenPassOpts;
 pub use http::HttpSubCommand;
 pub use text::{TextSignFormat, TextSignOpts, TextSubCommand, TextVerifyOpts};
@@ -31,14 +30,26 @@ pub enum SubCommand {
     // #[command(name = "base64", about = "Encode or decode base64 strings")]
     //这样写会报错： the trait bound `Base64SubCommand: clap::Args` is not satisfied the following other types implement trait `clap::Args`:
     //这是因为Base64SubCommand 是 Base64的子命令，Base64下面又分化了2个子命令，所以这里要标注command成subcommand
-    #[command(subcommand)]
+    #[command(subcommand, about = "Encode or decode base64 strings")]
     Base64(Base64SubCommand),
 
-    #[command(subcommand)]
+    #[command(subcommand, about = "Sign or verify text messages")]
     Text(TextSubCommand),
 
-    #[command(subcommand)]
+    #[command(subcommand, about = "Static File Http Server")]
     Http(HttpSubCommand),
+}
+
+impl CmdExecutor for SubCommand {
+    async fn execute(self) -> anyhow::Result<()> {
+        match self {
+            SubCommand::Csv(opts) => opts.execute().await,
+            SubCommand::GenPass(opts) => opts.execute().await,
+            SubCommand::Base64(opts) => opts.execute().await,
+            SubCommand::Text(opts) => opts.execute().await,
+            SubCommand::Http(opts) => opts.execute().await,
+        }
+    }
 }
 
 //第一个单元测试

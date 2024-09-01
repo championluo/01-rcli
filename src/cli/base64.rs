@@ -1,6 +1,9 @@
 use std::{fmt::Display, str::FromStr};
 
+use anyhow::Ok;
 use clap::{Parser, Subcommand};
+
+use crate::{base64_decode, base64_encode, CmdExecutor};
 
 use super::valid_file;
 
@@ -69,5 +72,38 @@ fn parse_base64_format(format: &str) -> Result<Base64Format, anyhow::Error> {
 impl Display for Base64Format {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", Into::<&'static str>::into(*self))
+    }
+}
+
+impl CmdExecutor for Base64EncodeOpts {
+    async fn execute(self) -> anyhow::Result<()> {
+        let encode = base64_encode(&self.input, self.format)?;
+        //解码命令 cargo run -- base64 decode -o temp64.txt --format urlsafe
+        //注意，这么写decode会报错 Error: Invalid symbol 10, offset 736.
+        //cargo run -- base64 encode -i Cargo.toml --format urlsafe > temp64.txt
+        // 使用上面这个命令， 会把 Encoded: 也输出到 文件中， 导致解码失败
+        // println!("Encoded: {}", encode);
+        println!("{}", encode);
+        Ok(())
+    }
+}
+
+impl CmdExecutor for Base64DecodeOpts {
+    async fn execute(self) -> anyhow::Result<()> {
+        let decode = base64_decode(&self.output, self.format)?;
+
+        //TODO: decoded data might not be string (but for this example, we assume it is)
+        let decode: String = String::from_utf8(decode)?;
+        print!("{}", decode);
+        Ok(())
+    }
+}
+
+impl CmdExecutor for Base64SubCommand {
+    async fn execute(self) -> anyhow::Result<()> {
+        match self {
+            Base64SubCommand::Encode(opts) => opts.execute().await,
+            Base64SubCommand::Decode(opts) => opts.execute().await,
+        }
     }
 }

@@ -1,8 +1,12 @@
+use crate::process_sign;
+use crate::process_text_generate;
+use crate::process_text_verify;
 use crate::valid_file;
 use crate::valid_path;
+use crate::CmdExecutor;
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use std::{fmt::Display, path::PathBuf, str::FromStr};
+use std::{fmt::Display, fs, path::PathBuf, str::FromStr};
 
 #[derive(Debug, Subcommand)]
 pub enum TextSubCommand {
@@ -92,4 +96,60 @@ pub struct TextKeyGenerateOpts {
     pub format: TextSignFormat,
     #[arg(short,long,value_parser = valid_path)]
     pub output: PathBuf,
+}
+
+impl CmdExecutor for TextSignOpts {
+    async fn execute(self) -> anyhow::Result<()> {
+        //注意这里加签需要区分format类型
+        //测试命令 cargo run -- text sign -k fixtures/blake3.txt
+        let process_sign = process_sign(&self.input, &self.key, self.format)?;
+        println!("{}", process_sign);
+        Ok(())
+    }
+}
+
+impl CmdExecutor for TextVerifyOpts {
+    async fn execute(self) -> anyhow::Result<()> {
+        println!("{:?}", self);
+        //测试命令 cargo run -- text verify -k fixtures/blake3.txt --sig 4dynUr9DyxEt8EjPi0OF1lHyPmCB_et6_Fty6hmmqjI
+        let verify_result = process_text_verify(&self.input, &self.key, self.format, &self.sig)?;
+        println!("{}", verify_result);
+        Ok(())
+    }
+}
+
+impl CmdExecutor for TextKeyGenerateOpts {
+    async fn execute(self) -> anyhow::Result<()> {
+        println!("{:?}", self);
+        let key = process_text_generate(self.format)?;
+
+        //这里要把结果能够输出到文件中
+        //根据不同类型,把返回写到文件中
+        match self.format {
+            //cargo run -- text generate -o fixtures
+            //可以在fixtures文件夹中看到生成的blake3 的密钥
+            TextSignFormat::Blake3 => {
+                let name = self.output.join("blake3.txt");
+                fs::write(name, &key[0])?;
+            }
+            //cargo run -- text generate -o fixtures -f ed25519
+            //可以在fixtures文件夹中看到生成的私钥和公钥
+            TextSignFormat::Ed25519 => {
+                let name = &self.output;
+                fs::write(name.join("ed25519.sk"), &key[0])?;
+                fs::write(name.join("ed25519.pk"), &key[1])?;
+            }
+        }
+        Ok(())
+    }
+}
+
+impl CmdExecutor for TextSubCommand {
+    async fn execute(self) -> anyhow::Result<()> {
+        match self {
+            TextSubCommand::Sign(opts) => opts.execute().await,
+            TextSubCommand::Verify(opts) => opts.execute().await,
+            TextSubCommand::Generate(opts) => opts.execute().await,
+        }
+    }
 }

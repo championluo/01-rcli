@@ -1,6 +1,8 @@
 use clap::Parser;
 use std::{fmt, str::FromStr};
 
+use crate::{process_csv, CmdExecutor};
+
 use super::valid_file; //注意这个super
 
 #[derive(Debug, Parser)]
@@ -98,5 +100,16 @@ impl fmt::Display for OutputFormat {
 
         //&'static可以不要， 因为不关心str的生命周期，使用完即止
         write!(f, "{}", Into::<&str>::into(*self))
+    }
+}
+
+impl CmdExecutor for CsvOpts {
+    async fn execute(self) -> anyhow::Result<()> {
+        let output = if let Some(output) = self.output {
+            output
+        } else {
+            format!("output.{}", self.format)
+        };
+        process_csv(&self.input, output, self.format)
     }
 }

@@ -1,4 +1,3 @@
-use anyhow::Result;
 use csv::Reader;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -22,7 +21,7 @@ struct Player {
 }
 
 //这里增加format入参
-pub fn process_csv(input: &str, output: String, format: OutputFormat) -> Result<()> {
+pub fn process_csv(input: &str, output: String, format: OutputFormat) -> anyhow::Result<()> {
     let mut reader = Reader::from_path(input)?;
     let mut ret_vec = Vec::with_capacity(128);
     let headers = reader.headers()?.clone();
