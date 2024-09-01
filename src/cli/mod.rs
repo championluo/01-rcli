@@ -4,13 +4,15 @@ mod genpass;
 mod http;
 mod text;
 
-use self::csv::CsvOpts;
+pub use self::csv::CsvOpts;
 pub use self::{base64::*, csv::OutputFormat};
-use crate::{valid_file, CmdExecutor};
-use clap::{Parser, Subcommand};
-use genpass::GenPassOpts;
-pub use http::HttpSubCommand;
-pub use text::{TextSignFormat, TextSignOpts, TextSubCommand, TextVerifyOpts};
+use crate::valid_file;
+pub use base64::Base64SubCommand;
+pub use clap::{Parser, Subcommand};
+pub use enum_dispatch::enum_dispatch;
+pub use genpass::GenPassOpts;
+pub use http::{HttpServeOpts, HttpSubCommand};
+pub use text::{TextKeyGenerateOpts, TextSignFormat, TextSignOpts, TextSubCommand, TextVerifyOpts};
 
 #[derive(Debug, Parser)] //相当于注解，打上标识的结构体再特定场景下会有特别处理
 #[command{name="rcli", version, author, about, long_about = None}]
@@ -19,7 +21,9 @@ pub struct Opts {
     pub cmd: SubCommand,
 }
 
-#[derive(Subcommand, Debug)] // Opts中实现了Debug trait， 所以类型属性中也应该实现Debug， 不然无法进行debug输出
+#[derive(Subcommand, Debug)]
+// Opts中实现了Debug trait， 所以类型属性中也应该实现Debug， 不然无法进行debug输出
+#[enum_dispatch(CmdExecutor)] // 这里用enum_dispatch来实现CmdExecutor的多态性
 pub enum SubCommand {
     #[command(name = "csv", about = "Show Csv, or Convert CSV to other formats")]
     Csv(CsvOpts),
@@ -40,17 +44,17 @@ pub enum SubCommand {
     Http(HttpSubCommand),
 }
 
-impl CmdExecutor for SubCommand {
-    async fn execute(self) -> anyhow::Result<()> {
-        match self {
-            SubCommand::Csv(opts) => opts.execute().await,
-            SubCommand::GenPass(opts) => opts.execute().await,
-            SubCommand::Base64(opts) => opts.execute().await,
-            SubCommand::Text(opts) => opts.execute().await,
-            SubCommand::Http(opts) => opts.execute().await,
-        }
-    }
-}
+// impl CmdExecutor for SubCommand {
+//     async fn execute(self) -> anyhow::Result<()> {
+//         match self {
+//             SubCommand::Csv(opts) => opts.execute().await,
+//             SubCommand::GenPass(opts) => opts.execute().await,
+//             SubCommand::Base64(opts) => opts.execute().await,
+//             SubCommand::Text(opts) => opts.execute().await,
+//             SubCommand::Http(opts) => opts.execute().await,
+//         }
+//     }
+// }
 
 //第一个单元测试
 //cfg(test) 就是 当前代码仅测试模式下有效

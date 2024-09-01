@@ -2,12 +2,14 @@ use std::{fmt::Display, str::FromStr};
 
 use anyhow::Ok;
 use clap::{Parser, Subcommand};
+use enum_dispatch::enum_dispatch;
 
 use crate::{base64_decode, base64_encode, CmdExecutor};
 
 use super::valid_file;
 
 #[derive(Debug, Subcommand)]
+#[enum_dispatch(CmdExecutor)]
 pub enum Base64SubCommand {
     //cargo run -- base64 encode -i abc
     #[command(name = "encode", about = "Encode base64 strings")]
@@ -99,11 +101,11 @@ impl CmdExecutor for Base64DecodeOpts {
     }
 }
 
-impl CmdExecutor for Base64SubCommand {
-    async fn execute(self) -> anyhow::Result<()> {
-        match self {
-            Base64SubCommand::Encode(opts) => opts.execute().await,
-            Base64SubCommand::Decode(opts) => opts.execute().await,
-        }
-    }
-}
+// impl CmdExecutor for Base64SubCommand {
+//     async fn execute(self) -> anyhow::Result<()> {
+//         match self {
+//             Base64SubCommand::Encode(opts) => opts.execute().await,
+//             Base64SubCommand::Decode(opts) => opts.execute().await,
+//         }
+//     }
+// }

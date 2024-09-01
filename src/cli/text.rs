@@ -6,9 +6,11 @@ use crate::valid_path;
 use crate::CmdExecutor;
 use anyhow::Result;
 use clap::{Parser, Subcommand};
+use enum_dispatch::enum_dispatch;
 use std::{fmt::Display, fs, path::PathBuf, str::FromStr};
 
 #[derive(Debug, Subcommand)]
+#[enum_dispatch(CmdExecutor)]
 pub enum TextSubCommand {
     //cargo run -- text sign -i abc
     #[command(about = "Sign a message with private/shared key")]
@@ -144,12 +146,12 @@ impl CmdExecutor for TextKeyGenerateOpts {
     }
 }
 
-impl CmdExecutor for TextSubCommand {
-    async fn execute(self) -> anyhow::Result<()> {
-        match self {
-            TextSubCommand::Sign(opts) => opts.execute().await,
-            TextSubCommand::Verify(opts) => opts.execute().await,
-            TextSubCommand::Generate(opts) => opts.execute().await,
-        }
-    }
-}
+// impl CmdExecutor for TextSubCommand {
+//     async fn execute(self) -> anyhow::Result<()> {
+//         match self {
+//             TextSubCommand::Sign(opts) => opts.execute().await,
+//             TextSubCommand::Verify(opts) => opts.execute().await,
+//             TextSubCommand::Generate(opts) => opts.execute().await,
+//         }
+//     }
+// }
